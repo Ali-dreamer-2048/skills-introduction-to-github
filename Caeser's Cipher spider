@@ -1,0 +1,207 @@
+import requests
+from bs4 import BeautifulSoup
+import nums_from_string
+import os
+
+letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+num_letters = len(letters)
+
+
+def print_menu():
+    print()
+    print("***************")
+    print("* 1:Encrypt a file      *")
+    print("* 2:Decrypt a file      *")
+    print("* 3:hack an encrypted file *")
+    print("* 4: Exit the program     *")
+    print("***************")
+
+def enter_key():
+    global key
+
+    while True:
+        try:
+            key = int(input("Enter the key :"))
+            if (key < 0):
+                print("Must be positive number. Input Again")
+            else:
+                break
+        except ValueError:
+            print("Shift must be an integer. Please input again.")
+        except Exception as e:
+            print("There have ", e, "Please input again.")
+
+def enter_file():
+    global input_file
+    global output_file
+
+    while True:
+        try:
+            while True:
+                input_file = input("Enter a input file:")
+                if os.path.exists(input_file):
+                    if input_file[-4:] == ".txt":
+                        break
+                    else:
+                        print("It is not a .txt file. Please input again.")
+                else:
+                    print("The location not exist. Please input again.")
+
+
+            while True:
+                output_file = input("Enter a output file :")
+                if os.path.exists(output_file):
+                    if output_file[-4:] == ".txt":
+                        break
+                    else:
+                        print("It is not a .txt file. Please input again.")
+                else:
+                    print("The location not exist. Please input again.")
+
+
+            print("All file location exist")
+            break
+        except Exception as e:
+            print("There have ", e, "Please input again.")
+
+
+def encrypy():
+    global ciphertext
+
+    f = open(input_file, "r")
+    text = f.read()
+    f.close()
+
+    ciphertext = ''
+    for letter in text:
+        if letter.isalpha():
+            letter = letter.upper()
+            index = letters.find(letter)
+            new_index = index + key
+            if new_index >= num_letters:
+                new_index -= num_letters
+            ciphertext += letters[new_index]
+        else:
+            ciphertext += letter
+
+    k = open(output_file,"w")
+    k.write(ciphertext)
+    k.close()
+
+def decrypy():
+    global text
+
+    f = open(input_file, "r")
+    ciphertext = f.read()
+    f.close()
+
+    text = ''
+    for letter in ciphertext:
+        if letter.isalpha():
+            letter = letter.upper()
+            index = letters.find(letter)
+            new_index = index - key
+            if new_index < 0:
+                new_index += num_letters
+            text += letters[new_index]
+        else:
+            text += letter
+
+    k = open(output_file,"w")
+    k.write(text)
+    k.close()
+
+def get_google_rank(keyword):
+    global numbers
+    global max
+
+    try:
+        url = f"https://www.bing.com/search?q={keyword}"
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'}
+
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "html.parser")
+        articles = soup.find("span", class_="sb_count")
+        result = articles.get_text().strip()
+        numbers = nums_from_string.get_nums(result)[0]
+
+        return -1
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        print("error 1")
+        return None
+
+
+def hacking():
+    global key
+
+    list_key = []
+    for i in range(0,26):
+        key = i
+        encrypy()
+        hacking_word = ciphertext.strip()
+        list_key.append(hacking_word)
+
+    print(list_key)
+    keywords = list_key
+
+    max = 0
+    no = 0
+    max_no =-1
+
+    for words  in keywords:
+        result = get_google_rank(words)
+        print(f"The result in key {no} is:{numbers} ")
+        no = no +1
+        if numbers > max:
+            max = numbers
+            max_no = no
+        elif numbers < max:
+            pass
+        else:
+            pass
+
+    print(max)
+    print(max_no)
+    print()
+    print(f"maximum result is :{max} when key is :{max_no}")
+
+    key = max_no
+    encrypy()
+
+def main():
+    end = False
+    while(not end):
+        print_menu()
+        choice = int(input("Your choice: "))
+
+        if(choice==1):
+            print('ENCRYPTION MODE SELECTED\n')
+            enter_file()
+            enter_key()
+            encrypy()
+            print(f'CIPHERTEXT:{ciphertext}')
+
+        elif(choice==2):
+            print('DECRYPTION MODE SELECTED\n')
+            enter_file()
+            enter_key()
+            decrypy()
+            print(f'TEXT:{text}')
+
+        elif(choice==3):
+            print('HACKING MODE SELECTED\n')
+            enter_file()
+            hacking()
+            print(f'TEXT:{ciphertext}')
+
+        elif(choice==4):
+            end=True
+
+        else:
+            print("Input must be 1,2,3,4. Please input again.")
+
+
+#Main Program
+main()
